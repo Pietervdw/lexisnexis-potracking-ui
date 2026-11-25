@@ -35,6 +35,44 @@
           >
             {{ statusName() }}
           </span>
+          @if (!isTerminal()) {
+            <div class="ms-auto flex flex-col items-end gap-1">
+              <div class="flex items-center gap-2">
+                <label class="sr-only" for="status-select">Status</label>
+                <select
+                  id="status-select"
+                  data-testid="status-select"
+                  class="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm"
+                  (change)="onStatusSelect($event)"
+                >
+                  <option [value]="''" [selected]="selectedStatus() === null" disabled>
+                    Change status...
+                  </option>
+                  @for (option of selectableStatuses(); track option.value) {
+                    <option [value]="option.value" [selected]="option.value === selectedStatus()">
+                      {{ option.name }}
+                    </option>
+                  }
+                </select>
+                <button
+                  type="button"
+                  data-testid="status-update"
+                  class="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+                  [disabled]="selectedStatus() === null || isUpdating()"
+                  (click)="updateStatus()"
+                >
+                  {{ isUpdating() ? 'Updating...' : 'Update' }}
+                </button>
+              </div>
+              @if (updateErrors().length > 0) {
+                <ul data-testid="status-update-error" class="list-disc text-sm text-red-600">
+                  @for (message of updateErrors(); track $index) {
+                    <li>{{ message }}</li>
+                  }
+                </ul>
+              }
+            </div>
+          }
         </div>
       </div>
       <dl class="grid grid-cols-1 text-sm sm:grid-cols-3">
@@ -48,7 +86,9 @@
         </div>
         <div class="p-4 ps-4">
           <dt class="text-gray-600">Created</dt>
-          <dd data-testid="created-date" class="mt-1">{{ current.createdAt | date: 'mediumDate' }}</dd>
+          <dd data-testid="created-date" class="mt-1">
+            {{ current.createdAt | date: 'mediumDate' }}
+          </dd>
         </div>
       </dl>
     </div>
@@ -86,11 +126,15 @@
       <dl class="w-full max-w-xs rounded-lg border border-gray-200 bg-white p-4 text-sm shadow-sm">
         <div class="flex items-baseline justify-between">
           <dt class="text-gray-600">Subtotal</dt>
-          <dd data-testid="subtotal" class="tabular-nums">{{ current.subtotal | number: '1.2-2' }}</dd>
+          <dd data-testid="subtotal" class="tabular-nums">
+            {{ current.subtotal | number: '1.2-2' }}
+          </dd>
         </div>
         <div class="mt-1 flex items-baseline justify-between">
           <dt class="text-gray-600">Tax Amount</dt>
-          <dd data-testid="tax-amount" class="tabular-nums">{{ current.taxAmount | number: '1.2-2' }}</dd>
+          <dd data-testid="tax-amount" class="tabular-nums">
+            {{ current.taxAmount | number: '1.2-2' }}
+          </dd>
         </div>
         <div class="mt-1 flex items-baseline justify-between border-t border-gray-200 pt-2">
           <dt class="font-semibold">Total</dt>
