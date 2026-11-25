@@ -169,6 +169,58 @@ describe('PurchaseOrderService', () => {
     ]);
   });
 
+  it('requests a status change with a PATCH to /purchaseorders/:number/status', () => {
+    const done = service.changeStatus('PO0001', 1);
+    done.subscribe();
+    const request = http.expectOne('/purchaseorders/PO0001/status');
+    expect(request.request.method).toEqual('PATCH');
+    request.flush({ success: true });
+    http.verify();
+  });
+
+  it('sends the integer status in the PATCH body', () => {
+    service.changeStatus('PO0002', 2).subscribe();
+    const request = http.expectOne('/purchaseorders/PO0002/status');
+    expect(request.request.body).toEqual({ status: 2 });
+    request.flush({ success: true });
+    http.verify();
+  });
+
+  it('completes without errors when the API reports a successful change', () => {
+    let completed = false;
+    let failure: unknown;
+    service
+      .changeStatus('PO0001', 0)
+      .subscribe({ complete: () => (completed = true), error: (e) => (failure = e) });
+    http.expectOne('/purchaseorders/PO0001/status').flush({ success: true });
+    expect(completed).toBe(true);
+    expect(failure).toBeUndefined();
+    http.verify();
+  });
+
+  it('fails with the API 400 message when the transition is rejected', () => {
+    let error: unknown;
+    service.changeStatus('PO0001', 3).subscribe({ error: (e) => (error = e) });
+    http
+      .expectOne('/purchaseorders/PO0001/status')
+      .flush(
+        { success: false, errors: ['Cannot change status from Pending to Fulfilled.'] },
+        { status: 400, statusText: 'Bad Request' },
+      );
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).errors).toEqual(['Cannot change status from Pending to Fulfilled.']);
+  });
+
+  it('fails with an empty error list when the API 400 carries no error messages', () => {
+    let error: unknown;
+    service.changeStatus('PO0001', 4).subscribe({ error: (e) => (error = e) });
+    http
+      .expectOne('/purchaseorders/PO0001/status')
+      .flush({ success: false, errors: null }, { status: 400, statusText: 'Bad Request' });
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).errors).toEqual([]);
+  });
+
   it('fails with a NotFoundError carrying the envelope errors when the API returns 404', () => {
     let error: unknown;
     service.getByNumber('PO9999').subscribe({ error: (e) => (error = e) });
