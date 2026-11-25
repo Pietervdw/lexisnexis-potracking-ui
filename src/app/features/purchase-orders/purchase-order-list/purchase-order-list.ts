@@ -1,7 +1,8 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { ApiError, PurchaseOrderService } from '../data-access/purchaseorder-service';
 import type { PurchaseOrderListItem } from '../data-access/purchaseorder-service';
+import { filterPurchaseOrders } from './purchase-order-filter';
 
 @Component({
   selector: 'app-purchase-order-list',
@@ -12,6 +13,10 @@ export class PurchaseOrderList {
   private readonly purchaseOrderService = inject(PurchaseOrderService);
 
   protected readonly orders = signal<PurchaseOrderListItem[]>([]);
+  protected readonly searchTerm = signal('');
+  protected readonly filteredOrders = computed(() =>
+    filterPurchaseOrders(this.orders(), this.searchTerm()),
+  );
   protected readonly isLoading = signal(true);
   protected readonly hasFailed = signal(false);
   protected readonly errors = signal<string[]>([]);
