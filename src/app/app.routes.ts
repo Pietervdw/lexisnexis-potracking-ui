@@ -10,6 +10,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'purchase-orders/new',
+    loadComponent: () =>
+      import('./features/purchase-orders/purchase-order-create/purchase-order-create').then(
+        (m) => m.PurchaseOrderCreate,
+      ),
+  },
+  {
     path: 'purchase-orders/:number',
     loadComponent: () =>
       import('./features/purchase-orders/purchase-order-detail/purchase-order-detail').then(

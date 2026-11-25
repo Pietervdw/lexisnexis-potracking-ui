@@ -23,6 +23,10 @@ interface PurchaseOrderGetResponse extends ApiResponse {
   purchaseOrder: PurchaseOrderDetail | null;
 }
 
+interface PurchaseOrderCreateResponse extends ApiResponse {
+  purchaseOrder: PurchaseOrderDetail | null;
+}
+
 export interface PurchaseOrderLineItem {
   sku: string;
   productName: string;
@@ -53,6 +57,19 @@ export class ApiError extends Error {
 
 export class NotFoundError extends ApiError {}
 
+export interface PurchaseOrderCreateLine {
+  sku: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface PurchaseOrderCreateRequest {
+  customerId: number;
+  externalRef: string;
+  lines: PurchaseOrderCreateLine[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class PurchaseOrderService {
   private readonly http = inject(HttpClient);
@@ -74,27 +91,58 @@ export class PurchaseOrderService {
   }
 
   getByNumber(number: string): Observable<PurchaseOrderDetail> {
-    return this.http
-      .get<PurchaseOrderGetResponse>(`/purchaseorders/${number}`)
-      .pipe(
-        map((response) => {
-          const { purchaseOrder } = this.unwrapEnvelope(response);
-          if (purchaseOrder === null) {
-            throw new ApiError(['The Purchase Order data is missing from the response.']);
-          }
-          return purchaseOrder;
-        }),
-        catchError((error: unknown) => {
-          if (error instanceof HttpErrorResponse) {
-            const envelope = (error.error as Pick<ApiResponse, 'errors'> | null) ?? { errors: null };
-            const apiError =
-              error.status === 404
-                ? new NotFoundError(envelope.errors ?? [])
-                : new ApiError(envelope.errors ?? []);
-            throw apiError;
-          }
-          throw error;
-        }),
-      );
+    return this.http.get<PurchaseOrderGetResponse>(`/purchaseorders/${number}`).pipe(
+      map((response) => {
+        const { purchaseOrder } = this.unwrapEnvelope(response);
+        if (purchaseOrder === null) {
+          throw new ApiError(['The Purchase Order data is missing from the response.']);
+        }
+        return purchaseOrder;
+      }),
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse) {
+          const envelope = (error.error as Pick<ApiResponse, 'errors'> | null) ?? { errors: null };
+          const apiError =
+            error.status === 404
+              ? new NotFoundError(envelope.errors ?? [])
+              : new ApiError(envelope.errors ?? []);
+          throw apiError;
+        }
+        throw error;
+      }),
+    );
   }
+
+  create(request: PurchaseOrderCreateRequest): Observable<PurchaseOrderDetail> {
+    return this.http.post<PurchaseOrderCreateResponse>('/purchaseorders', request).pipe(
+      map((response) => {
+        const { purchaseOrder } = this.unwrapEnvelope(response);
+        if (purchaseOrder === null) {
+          throw new ApiError(['The Purchase Order data is missing from the response.']);
+        }
+        return purchaseOrder;
+      }),
+      catchError((error: unknown) => {
+        if (error instanceof HttpErrorResponse) {
+          throw new ApiError(apiErrorMessages(error.error));
+        }
+        throw error;
+      }),
+    );
+  }
+}
+
+function apiErrorMessages(body: unknown): string[] {
+  if (body !== null && typeof body === 'object' && 'errors' in body) {
+    const errors = (body as { errors: unknown }).errors;
+    if (Array.isArray(errors)) {
+      return errors.filter((message): message is string => typeof message === 'string');
+    }
+    if (errors !== null && typeof errors === 'object') {
+      return Object.values(errors)
+        .flat()
+        .filter((message): message is string => typeof message === 'string');
+    }
+  }
+  return [];
 }

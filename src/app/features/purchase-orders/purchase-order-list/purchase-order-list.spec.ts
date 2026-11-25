@@ -8,6 +8,9 @@ import { PurchaseOrderList } from './purchase-order-list';
 @Component({ selector: 'purchase-order-detail-stub', template: '' })
 class PurchaseOrderDetailStub {}
 
+@Component({ selector: 'purchase-order-create-stub', template: '' })
+class PurchaseOrderCreateStub {}
+
 const RESPONSE = {
   success: true,
   purchaseOrders: [
@@ -27,7 +30,10 @@ describe('PurchaseOrderList', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter(
-          [{ path: 'purchase-orders/:number', component: PurchaseOrderDetailStub }],
+          [
+            { path: 'purchase-orders/new', component: PurchaseOrderCreateStub },
+            { path: 'purchase-orders/:number', component: PurchaseOrderDetailStub },
+          ],
           withDisabledInitialNavigation(),
         ),
       ],
@@ -84,6 +90,20 @@ describe('PurchaseOrderList', () => {
     const message = root.querySelector('[data-testid="no-results"]');
     expect(message).toBeTruthy();
     expect(message!.textContent).toContain('zzz');
+  });
+
+  it('navigates to the create form when the New Purchase Order button is clicked', async () => {
+    const fixture = TestBed.createComponent(PurchaseOrderList);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    http.expectOne('/purchaseorders').flush(RESPONSE);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLElement>('[data-testid="new-purchase-order"]')!.click();
+    await fixture.whenStable();
+    expect(router.url).toEqual('/purchase-orders/new');
+    http.verify();
   });
 
   it('navigates to the detail page when a row is clicked', async () => {

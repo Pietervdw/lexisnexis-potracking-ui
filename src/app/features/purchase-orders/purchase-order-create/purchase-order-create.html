@@ -1,0 +1,188 @@
+<div class="mx-auto max-w-3xl p-6">
+  <h1 class="mb-6 text-2xl font-semibold">Create Purchase Order</h1>
+
+  <div class="grid gap-4 sm:grid-cols-2">
+    <label class="text-sm">
+      <span class="mb-1 block font-medium">Customer</span>
+      <select
+        data-testid="customer-select"
+        class="w-full rounded-md border border-gray-300 bg-white px-3 py-2"
+        [value]="customerId()"
+        (change)="setCustomerId($any($event.target).value)"
+        (blur)="markTouched('customerId')"
+      >
+        <option value="">Select a customer...</option>
+        @for (customer of customers(); track customer.id) {
+          <option [value]="customer.id">{{ customer.name }}</option>
+        }
+      </select>
+      @if (visibleMessage('customerId', formErrors().customerId); as message) {
+        <p data-testid="customer-error" class="mt-1 text-xs text-red-600">{{ message }}</p>
+      }
+    </label>
+    <label class="text-sm">
+      <span class="mb-1 block font-medium">External Reference</span>
+      <input
+        data-testid="external-ref-input"
+        type="text"
+        class="w-full rounded-md border border-gray-300 px-3 py-2"
+        [value]="externalRef()"
+        (input)="setExternalRef($any($event.target).value)"
+        (blur)="markTouched('externalRef')"
+      />
+      @if (visibleMessage('externalRef', formErrors().externalRef); as message) {
+        <p data-testid="external-ref-error" class="mt-1 text-xs text-red-600">{{ message }}</p>
+      }
+    </label>
+  </div>
+
+  @if (submitAttempted() && formErrors().noLines; as noLinesError) {
+    <p data-testid="no-lines-error" class="mt-4 text-sm text-red-600">
+      {{ noLinesRequiredMessage }}
+    </p>
+  }
+
+  <div class="mt-6 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-200 text-left text-gray-600">
+          <th scope="col" class="py-2 pr-4 ps-4 font-medium">SKU</th>
+          <th scope="col" class="py-2 pr-4 font-medium">Product Name</th>
+          <th scope="col" class="py-2 pr-4 font-medium">Quantity</th>
+          <th scope="col" class="py-2 pr-4 font-medium">Unit Price</th>
+          <th scope="col" class="py-2 pe-4"></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of lines(); track line.id; let i = $index) {
+          <tr data-testid="line-row" class="border-b border-gray-100 align-top">
+            <td class="py-2 pr-4 ps-4">
+              <input
+                type="text"
+                class="w-28 rounded-md border border-gray-300 px-2 py-1"
+                [value]="line.sku"
+                (input)="setLineValue(line, 'sku', $any($event.target).value)"
+                (blur)="markTouched(lineFieldKey(line.id, 'sku'))"
+              />
+              @if (
+                visibleMessage(lineFieldKey(line.id, 'sku'), formErrors().lineErrors[i]?.sku);
+                as message
+              ) {
+                <p data-testid="sku-error" class="mt-1 text-xs text-red-600">{{ message }}</p>
+              }
+            </td>
+            <td class="py-2 pr-4">
+              <input
+                type="text"
+                class="w-40 rounded-md border border-gray-300 px-2 py-1"
+                [value]="line.productName"
+                (input)="setLineValue(line, 'productName', $any($event.target).value)"
+                (blur)="markTouched(lineFieldKey(line.id, 'productName'))"
+              />
+              @if (
+                visibleMessage(
+                  lineFieldKey(line.id, 'productName'),
+                  formErrors().lineErrors[i]?.productName
+                );
+                as message
+              ) {
+                <p data-testid="product-name-error" class="mt-1 text-xs text-red-600">
+                  {{ message }}
+                </p>
+              }
+            </td>
+            <td class="py-2 pr-4">
+              <input
+                type="number"
+                min="1"
+                class="w-20 rounded-md border border-gray-300 px-2 py-1"
+                [value]="line.quantity"
+                (input)="setLineValue(line, 'quantity', $any($event.target).value)"
+                (blur)="markTouched(lineFieldKey(line.id, 'quantity'))"
+              />
+              @if (
+                visibleMessage(
+                  lineFieldKey(line.id, 'quantity'),
+                  formErrors().lineErrors[i]?.quantity
+                );
+                as message
+              ) {
+                <p data-testid="quantity-error" class="mt-1 text-xs text-red-600">{{ message }}</p>
+              }
+            </td>
+            <td class="py-2 pr-4">
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                class="w-24 rounded-md border border-gray-300 px-2 py-1"
+                [value]="line.unitPrice"
+                (input)="setLineValue(line, 'unitPrice', $any($event.target).value)"
+                (blur)="markTouched(lineFieldKey(line.id, 'unitPrice'))"
+              />
+              @if (
+                visibleMessage(
+                  lineFieldKey(line.id, 'unitPrice'),
+                  formErrors().lineErrors[i]?.unitPrice
+                );
+                as message
+              ) {
+                <p data-testid="unit-price-error" class="mt-1 text-xs text-red-600">
+                  {{ message }}
+                </p>
+              }
+            </td>
+            <td class="py-2 pe-4 text-right">
+              <button
+                data-testid="remove-line"
+                type="button"
+                class="text-sm text-red-600 disabled:text-gray-400"
+                [disabled]="lines().length === 1"
+                (click)="removeLine(line.id)"
+              >
+                Remove
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    <div class="p-3">
+      <button
+        data-testid="add-line"
+        type="button"
+        class="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm hover:bg-gray-50"
+        (click)="addLine()"
+      >
+        Add Line Item
+      </button>
+    </div>
+  </div>
+
+  @if (apiErrors().length > 0) {
+    <div
+      data-testid="api-errors"
+      role="alert"
+      class="mt-4 rounded-md border border-red-200 bg-red-50 p-4"
+    >
+      <p class="text-sm font-medium text-red-700">The Purchase Order could not be created.</p>
+      <ul class="mt-2 list-disc pl-5 text-sm text-red-700">
+        @for (message of apiErrors(); track $index) {
+          <li>{{ message }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  <div class="mt-6 flex justify-end">
+    <button
+      data-testid="submit-button"
+      type="button"
+      class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+      [disabled]="isSubmitting()"
+      (click)="submit()"
+    >
+      Create Purchase Order
+    </button>
+  </div>
+</div>
