@@ -1,0 +1,35 @@
+<div class="mx-auto max-w-3xl p-6">
+  <h1 class="mb-4 text-2xl font-semibold">Purchase Orders</h1>
+
+  @if (isLoading()) {
+    <p class="text-sm text-gray-500">Loading Purchase Orders...</p>
+  } @else if (orders().length > 0) {
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-gray-200 text-left text-gray-600">
+          <th scope="col" class="py-2 pr-4 font-medium">PO Number</th>
+          <th scope="col" class="py-2 pr-4 font-medium">External Reference</th>
+          <th scope="col" class="py-2 pr-4 font-medium">Customer</th>
+          <th scope="col" class="py-2 text-right font-medium">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order.number) {
+          <tr class="border-b border-gray-100">
+            <td class="py-2 pr-4">{{ order.number }}</td>
+            <td class="py-2 pr-4">{{ order.externalRef }}</td>
+            <td class="py-2 pr-4">{{ order.customerName }}</td>
+            <td class="py-2 text-right tabular-nums">{{ order.total | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else {
+    <p
+      class="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500"
+      data-testid="empty-state"
+    >
+      No Purchase Orders yet.
+    </p>
+  }
+</div>
