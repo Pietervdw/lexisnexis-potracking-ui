@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ApiError, NotFoundError, PurchaseOrderService } from './purchaseorder-service';
+import type { PurchaseOrderDetail } from './purchaseorder-service';
 
 describe('PurchaseOrderService', () => {
   let service: PurchaseOrderService;
@@ -100,13 +101,83 @@ describe('PurchaseOrderService', () => {
     expect(detail).toEqual(DETAIL_ENVELOPE.purchaseOrder);
   });
 
+  it('creates with a POST to /purchaseorders carrying the request body', () => {
+    let created: PurchaseOrderDetail | null = null;
+    service
+      .create({
+        customerId: 3,
+        externalRef: 'REF-A',
+        lines: [{ sku: 'SKU-1', productName: 'Widget', quantity: 2, unitPrice: 25 }],
+      })
+      .subscribe((result) => (created = result));
+    const request = http.expectOne('/purchaseorders');
+    expect(request.request.method).toEqual('POST');
+    expect(request.request.body).toEqual({
+      customerId: 3,
+      externalRef: 'REF-A',
+      lines: [{ sku: 'SKU-1', productName: 'Widget', quantity: 2, unitPrice: 25 }],
+    });
+    request.flush({ success: true, purchaseOrder: DETAIL_ENVELOPE.purchaseOrder });
+    expect(created).toEqual(DETAIL_ENVELOPE.purchaseOrder);
+  });
+
+  it('fails with the API messages when the create is rejected with a custom envelope 400', () => {
+    let error: unknown;
+    service
+      .create({ customerId: 1, externalRef: 'REF-A', lines: [] })
+      .subscribe({ error: (e) => (error = e) });
+    http.expectOne('/purchaseorders').flush(
+      {
+        success: false,
+        errors: ["An order with external reference 'REF-A' already exists."],
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).errors).toEqual([
+      "An order with external reference 'REF-A' already exists.",
+    ]);
+  });
+
+  it('flattens the field errors when model binding rejects the create with ValidationProblemDetails', () => {
+    let error: unknown;
+    service
+      .create({
+        customerId: 1,
+        externalRef: '',
+        lines: [{ sku: '', productName: '', quantity: 0, unitPrice: -1 }],
+      })
+      .subscribe({ error: (e) => (error = e) });
+    http.expectOne('/purchaseorders').flush(
+      {
+        type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
+        title: 'One or more validation errors occurred.',
+        status: 400,
+        errors: {
+          ExternalRef: ['The ExternalRef field is required.'],
+          'Lines[0].Quantity': ['Quantity must be greater than 0.'],
+          'Lines[0].UnitPrice': ['Unit price cannot be less than 0.'],
+        },
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).errors).toEqual([
+      'The ExternalRef field is required.',
+      'Quantity must be greater than 0.',
+      'Unit price cannot be less than 0.',
+    ]);
+  });
+
   it('fails with a NotFoundError carrying the envelope errors when the API returns 404', () => {
     let error: unknown;
     service.getByNumber('PO9999').subscribe({ error: (e) => (error = e) });
-    http.expectOne('/purchaseorders/PO9999').flush(
-      { success: false, errors: ["Purchase order with number 'PO9999' not found."] },
-      { status: 404, statusText: 'Not Found' },
-    );
+    http
+      .expectOne('/purchaseorders/PO9999')
+      .flush(
+        { success: false, errors: ["Purchase order with number 'PO9999' not found."] },
+        { status: 404, statusText: 'Not Found' },
+      );
     expect(error).toBeInstanceOf(NotFoundError);
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).errors).toEqual(["Purchase order with number 'PO9999' not found."]);
