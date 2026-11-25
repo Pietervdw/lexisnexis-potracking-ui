@@ -35,7 +35,10 @@
           </thead>
           <tbody>
             @for (order of filteredOrders(); track order.number) {
-              <tr class="border-b border-gray-100">
+              <tr
+                class="border-b border-gray-100 hover:bg-gray-50"
+                [routerLink]="['/purchase-orders', order.number]"
+              >
                 <td class="py-2 pr-4 ps-4">{{ order.number }}</td>
                 <td class="py-2 pr-4">{{ order.externalRef }}</td>
                 <td class="py-2 pr-4">{{ order.customerName }}</td>

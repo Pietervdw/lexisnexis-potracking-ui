@@ -9,4 +9,11 @@ export const routes: Routes = [
         (m) => m.PurchaseOrderList,
       ),
   },
+  {
+    path: 'purchase-orders/:number',
+    loadComponent: () =>
+      import('./features/purchase-orders/purchase-order-detail/purchase-order-detail').then(
+        (m) => m.PurchaseOrderDetail,
+      ),
+  },
 ];

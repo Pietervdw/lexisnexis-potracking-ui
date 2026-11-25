@@ -1,0 +1,165 @@
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { TestBed } from '@angular/core/testing';
+import { Subject } from 'rxjs';
+import { PurchaseOrderDetail } from './purchase-order-detail';
+
+const DETAIL_ENVELOPE = {
+  success: true,
+  purchaseOrder: {
+    customerId: 3,
+    number: 'PO0001',
+    externalRef: 'REF-A',
+    deliveryFee: 0,
+    taxPercentage: 15,
+    status: 0,
+    createdAt: '2026-11-24T09:30:00Z',
+    lines: [
+      { sku: 'SKU-1', productName: 'Widget', quantity: 2, unitPrice: 25, lineTotal: 50 },
+      { sku: 'SKU-2', productName: 'Gadget', quantity: 1, unitPrice: 99.5, lineTotal: 99.5 },
+    ],
+    subtotal: 149.5,
+    taxAmount: 22.425,
+    total: 171.925,
+  },
+};
+
+describe('PurchaseOrderDetail', () => {
+  let http: HttpTestingController;
+  let paramMap$: Subject<ReturnType<typeof convertToParamMap>>;
+
+  beforeEach(async () => {
+    paramMap$ = new Subject();
+    await TestBed.configureTestingModule({
+      imports: [PurchaseOrderDetail],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
+      ],
+    }).compileComponents();
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  it('shows the status badge, External Reference, Customer name and created date', () => {
+    const fixture = TestBed.createComponent(PurchaseOrderDetail);
+    fixture.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
+    http.expectOne('/customers').flush([{ id: 3, name: 'Acme' }, { id: 1, name: 'Globex' }]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('[data-testid="status-badge"]')?.textContent?.trim()).toEqual(
+      'Pending',
+    );
+    expect(root.querySelector('[data-testid="external-ref"]')?.textContent?.trim()).toEqual('REF-A');
+    expect(root.querySelector('[data-testid="customer-name"]')?.textContent?.trim()).toEqual(
+      'Acme',
+    );
+    expect(root.querySelector('[data-testid="created-date"]')?.textContent).toContain('Nov 24, 2026');
+
+    http.verify();
+  });
+
+  it('shows the Line Items table with quantities, prices and line totals', () => {
+    const fixture = TestBed.createComponent(PurchaseOrderDetail);
+    fixture.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
+    http.expectOne('/customers').flush([{ id: 3, name: 'Acme' }]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const rows = Array.from(root.querySelectorAll('tbody tr'));
+    expect(rows.length).toEqual(2);
+    const cells = (row: Element) =>
+      Array.from(row.querySelectorAll('td')).map((td) => td.textContent?.trim());
+    expect(cells(rows[0])).toEqual(['SKU-1', 'Widget', '2', '25.00', '50.00']);
+    expect(cells(rows[1])).toEqual(['SKU-2', 'Gadget', '1', '99.50', '99.50']);
+
+    expect(root.querySelector('[data-testid="subtotal"]')?.textContent?.trim()).toEqual('149.50');
+    expect(root.querySelector('[data-testid="tax-amount"]')?.textContent?.trim()).toEqual('22.43');
+    expect(root.querySelector('[data-testid="total"]')?.textContent?.trim()).toEqual('171.93');
+
+    http.verify();
+  });
+
+  it('shows a not-found message when the PO Number does not exist', () => {
+    const fixture = TestBed.createComponent(PurchaseOrderDetail);
+    fixture.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    http.expectOne('/purchaseorders/PO0001').flush(
+      { success: false, errors: ["Purchase order with number 'PO0001' not found."] },
+      { status: 404, statusText: 'Not Found' },
+    );
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const message = root.querySelector('[data-testid="not-found"]');
+    expect(message).toBeTruthy();
+    expect(message!.textContent).toContain('PO0001');
+
+    http.verify();
+  });
+
+  it('shows a failure message with the API errors when the Purchase Order could not be loaded', () => {
+    const fixture = TestBed.createComponent(PurchaseOrderDetail);
+    fixture.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    http.expectOne('/purchaseorders/PO0001').flush(
+      { success: false, errors: ['Something went wrong on the server.'] },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const message = root.querySelector('[data-testid="load-failure"]');
+    expect(message).toBeTruthy();
+
+    http.verify();
+  });
+
+  it('falls back to an empty Customer name when the Customers endpoint fails', () => {
+    const fixture = TestBed.createComponent(PurchaseOrderDetail);
+    fixture.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
+    http.expectOne('/customers').flush(
+      { success: false },
+      { status: 500, statusText: 'Server Error' },
+    );
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('[data-testid="customer-name"]')?.textContent?.trim()).toEqual('');
+    expect(root.querySelector('[data-testid="status-badge"]')?.textContent?.trim()).toEqual(
+      'Pending',
+    );
+
+    http.verify();
+  });
+
+  it('discards an in-flight load when the PO Number changes', () => {
+    const fixture = TestBed.createComponent(PurchaseOrderDetail);
+    fixture.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    const stale = http.expectOne('/purchaseorders/PO0001');
+    paramMap$.next(convertToParamMap({ number: 'PO0002' }));
+    http
+      .expectOne('/purchaseorders/PO0002')
+      .flush({
+        ...DETAIL_ENVELOPE,
+        purchaseOrder: { ...DETAIL_ENVELOPE.purchaseOrder, number: 'PO0002' },
+      });
+    http.expectOne('/customers').flush([{ id: 3, name: 'Acme' }]);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    expect(root.querySelector('h1')?.textContent?.trim()).toEqual('PO0002');
+    expect(stale.cancelled).toBe(true);
+
+    http.verify();
+  });
+});

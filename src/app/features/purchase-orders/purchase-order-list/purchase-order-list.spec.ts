@@ -1,7 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Router, provideRouter, withDisabledInitialNavigation } from '@angular/router';
 import { PurchaseOrderList } from './purchase-order-list';
+
+@Component({ selector: 'purchase-order-detail-stub', template: '' })
+class PurchaseOrderDetailStub {}
 
 const RESPONSE = {
   success: true,
@@ -18,7 +23,14 @@ describe('PurchaseOrderList', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [PurchaseOrderList],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter(
+          [{ path: 'purchase-orders/:number', component: PurchaseOrderDetailStub }],
+          withDisabledInitialNavigation(),
+        ),
+      ],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
   });
@@ -72,5 +84,23 @@ describe('PurchaseOrderList', () => {
     const message = root.querySelector('[data-testid="no-results"]');
     expect(message).toBeTruthy();
     expect(message!.textContent).toContain('zzz');
+  });
+
+  it('navigates to the detail page when a row is clicked', async () => {
+    const fixture = TestBed.createComponent(PurchaseOrderList);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    http.expectOne('/purchaseorders').flush(RESPONSE);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    const row = Array.from(root.querySelectorAll('tbody tr')).find((candidate) =>
+      candidate.textContent?.includes('PO0012'),
+    ) as HTMLElement;
+    row.click();
+    await fixture.whenStable();
+
+    expect(router.url).toEqual('/purchase-orders/PO0012');
+    http.verify();
   });
 });
