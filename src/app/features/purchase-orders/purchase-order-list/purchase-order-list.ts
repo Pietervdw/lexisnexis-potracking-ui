@@ -13,6 +13,7 @@ export class PurchaseOrderList {
 
   protected readonly orders = signal<PurchaseOrderListItem[]>([]);
   protected readonly isLoading = signal(true);
+  protected readonly hasFailed = signal(false);
 
   constructor() {
     this.purchaseOrderService.list().subscribe({
@@ -20,7 +21,10 @@ export class PurchaseOrderList {
         this.orders.set(orders);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false),
+      error: () => {
+        this.hasFailed.set(true);
+        this.isLoading.set(false);
+      },
     });
   }
 }

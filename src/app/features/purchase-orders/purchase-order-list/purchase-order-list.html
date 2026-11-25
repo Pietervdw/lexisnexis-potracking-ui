@@ -3,6 +3,8 @@
 
   @if (isLoading()) {
     <p class="text-sm text-gray-500">Loading Purchase Orders...</p>
+  } @else if (hasFailed()) {
+    <p class="text-sm text-red-600">Failed to load Purchase Orders. Is the API running?</p>
   } @else if (orders().length > 0) {
     <table class="w-full text-sm">
       <thead>
