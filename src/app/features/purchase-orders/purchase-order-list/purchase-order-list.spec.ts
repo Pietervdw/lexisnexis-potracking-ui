@@ -117,6 +117,7 @@ describe('PurchaseOrderList', () => {
     const row = Array.from(root.querySelectorAll('tbody tr')).find((candidate) =>
       candidate.textContent?.includes('PO0012'),
     ) as HTMLElement;
+    expect(row.classList).toContain('cursor-pointer');
     row.click();
     await fixture.whenStable();
 

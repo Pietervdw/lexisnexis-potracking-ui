@@ -1,4 +1,12 @@
 <div class="mx-auto max-w-3xl p-6">
+  <a
+    routerLink="/purchase-orders"
+    data-testid="back-to-list"
+    class="mb-4 inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
+  >
+    &larr; Back to Purchase Orders
+  </a>
+
   @if (isLoading()) {
     <p class="text-sm text-gray-500">Loading Purchase Order...</p>
   } @else if (isNotFound()) {

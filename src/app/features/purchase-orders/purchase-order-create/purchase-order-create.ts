@@ -3,8 +3,9 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { CustomerService } from '../../customers/data-access/customer-service';
 import type { Customer } from '../../customers/data-access/customer-service';
-import { ApiError, PurchaseOrderService } from '../data-access/purchaseorder-service';
+import { PurchaseOrderService } from '../data-access/purchaseorder-service';
 import type { PurchaseOrderCreateRequest } from '../data-access/purchaseorder-service';
+import { ApiError } from '../../../core/http/api-error';
 import {
   PURCHASE_ORDER_MESSAGES,
   validatePurchaseOrderDraft,

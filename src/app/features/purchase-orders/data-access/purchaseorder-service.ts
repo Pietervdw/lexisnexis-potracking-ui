@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { ApiError, NotFoundError } from '../../../core/http/api-error';
 
 interface ApiResponse {
   success: boolean;
@@ -48,14 +49,6 @@ export interface PurchaseOrderDetail {
   taxAmount: number;
   total: number;
 }
-
-export class ApiError extends Error {
-  constructor(readonly errors: string[]) {
-    super(errors.length > 0 ? errors.join(' ') : 'The API reported a failure.');
-  }
-}
-
-export class NotFoundError extends ApiError {}
 
 export interface PurchaseOrderCreateLine {
   sku: string;

@@ -1,14 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { of, Subscription } from 'rxjs';
 import { catchError, concatMap, map } from 'rxjs/operators';
-import {
-  ApiError,
-  NotFoundError,
-  PurchaseOrderService,
-} from '../data-access/purchaseorder-service';
+import { PurchaseOrderService } from '../data-access/purchaseorder-service';
+import { ApiError, NotFoundError } from '../../../core/http/api-error';
 import type { PurchaseOrderDetail as PurchaseOrderDetailModel } from '../data-access/purchaseorder-service';
 import { CustomerService } from '../../customers/data-access/customer-service';
 import {
@@ -20,7 +17,7 @@ import {
 
 @Component({
   selector: 'app-purchase-order-detail',
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, RouterLink],
   templateUrl: './purchase-order-detail.html',
 })
 export class PurchaseOrderDetail {

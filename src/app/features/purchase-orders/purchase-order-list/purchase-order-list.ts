@@ -1,8 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { ApiError, PurchaseOrderService } from '../data-access/purchaseorder-service';
+import { PurchaseOrderService } from '../data-access/purchaseorder-service';
 import type { PurchaseOrderListItem } from '../data-access/purchaseorder-service';
+import { ApiError } from '../../../core/http/api-error';
 import { filterPurchaseOrders } from './purchase-order-filter';
 
 @Component({

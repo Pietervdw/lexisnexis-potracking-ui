@@ -1,6 +1,11 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import {
+  ActivatedRoute,
+  convertToParamMap,
+  provideRouter,
+  withDisabledInitialNavigation,
+} from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
 import { PurchaseOrderDetail } from './purchase-order-detail';
@@ -54,10 +59,40 @@ describe('PurchaseOrderDetail', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        provideRouter([], withDisabledInitialNavigation()),
         { provide: ActivatedRoute, useValue: { paramMap: paramMap$ } },
       ],
     }).compileComponents();
     http = TestBed.inject(HttpTestingController);
+  });
+
+  it('shows a back link to the Purchase Orders list on the loaded and not-found states', () => {
+    const loaded = TestBed.createComponent(PurchaseOrderDetail);
+    const loadedRoot = loadPage(loaded, DETAIL_ENVELOPE);
+    const backLink = loadedRoot.querySelector('a[data-testid="back-to-list"]') as HTMLAnchorElement;
+    expect(backLink.getAttribute('href')).toEqual('/purchase-orders');
+    expect(backLink.textContent).toContain('Back to Purchase Orders');
+    loaded.destroy();
+
+    const notFound = TestBed.createComponent(PurchaseOrderDetail);
+    notFound.detectChanges();
+    paramMap$.next(convertToParamMap({ number: 'PO0001' }));
+    http
+      .expectOne('/purchaseorders/PO0001')
+      .flush(
+        { success: false, errors: ["Purchase order with number 'PO0001' not found."] },
+        { status: 404, statusText: 'Not Found' },
+      );
+    notFound.detectChanges();
+    const notFoundRoot = notFound.nativeElement as HTMLElement;
+    const backLinkInNotFound = notFoundRoot.querySelector(
+      'a[data-testid="back-to-list"]',
+    ) as HTMLAnchorElement;
+    expect(backLinkInNotFound).toBeTruthy();
+    expect(backLinkInNotFound.getAttribute('href')).toEqual('/purchase-orders');
+    notFound.destroy();
+
+    http.verify();
   });
 
   it('shows the status badge, External Reference, Customer name and created date', () => {

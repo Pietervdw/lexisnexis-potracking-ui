@@ -1,8 +1,9 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ApiError, NotFoundError, PurchaseOrderService } from './purchaseorder-service';
+import { PurchaseOrderService } from './purchaseorder-service';
 import type { PurchaseOrderDetail } from './purchaseorder-service';
+import { ApiError, NotFoundError } from '../../../core/http/api-error';
 
 describe('PurchaseOrderService', () => {
   let service: PurchaseOrderService;
