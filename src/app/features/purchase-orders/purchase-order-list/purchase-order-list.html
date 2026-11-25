@@ -13,26 +13,28 @@
       </ul>
     }
   } @else if (orders().length > 0) {
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="border-b border-gray-200 text-left text-gray-600">
-          <th scope="col" class="py-2 pr-4 font-medium">PO Number</th>
-          <th scope="col" class="py-2 pr-4 font-medium">External Reference</th>
-          <th scope="col" class="py-2 pr-4 font-medium">Customer</th>
-          <th scope="col" class="py-2 text-right font-medium">Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (order of orders(); track order.number) {
-          <tr class="border-b border-gray-100">
-            <td class="py-2 pr-4">{{ order.number }}</td>
-            <td class="py-2 pr-4">{{ order.externalRef }}</td>
-            <td class="py-2 pr-4">{{ order.customerName }}</td>
-            <td class="py-2 text-right tabular-nums">{{ order.total | number: '1.2-2' }}</td>
+    <div class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-gray-200 text-left text-gray-600">
+            <th scope="col" class="py-2 pr-4 ps-4 font-medium">PO Number</th>
+            <th scope="col" class="py-2 pr-4 font-medium">External Reference</th>
+            <th scope="col" class="py-2 pr-4 font-medium">Customer</th>
+            <th scope="col" class="py-2 pe-4 text-right font-medium">Total</th>
           </tr>
-        }
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          @for (order of orders(); track order.number) {
+            <tr class="border-b border-gray-100">
+              <td class="py-2 pr-4 ps-4">{{ order.number }}</td>
+              <td class="py-2 pr-4">{{ order.externalRef }}</td>
+              <td class="py-2 pr-4">{{ order.customerName }}</td>
+              <td class="py-2 pe-4 text-right tabular-nums">{{ order.total | number: '1.2-2' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
   } @else {
     <p
       class="rounded-md border border-dashed border-gray-300 p-8 text-center text-gray-500"
