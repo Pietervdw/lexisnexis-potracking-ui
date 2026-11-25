@@ -1,6 +1,6 @@
 import { Component, inject, signal } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { PurchaseOrderService } from '../data-access/purchaseorder-service';
+import { ApiError, PurchaseOrderService } from '../data-access/purchaseorder-service';
 import type { PurchaseOrderListItem } from '../data-access/purchaseorder-service';
 
 @Component({
@@ -14,6 +14,7 @@ export class PurchaseOrderList {
   protected readonly orders = signal<PurchaseOrderListItem[]>([]);
   protected readonly isLoading = signal(true);
   protected readonly hasFailed = signal(false);
+  protected readonly errors = signal<string[]>([]);
 
   constructor() {
     this.purchaseOrderService.list().subscribe({
@@ -21,7 +22,10 @@ export class PurchaseOrderList {
         this.orders.set(orders);
         this.isLoading.set(false);
       },
-      error: () => {
+      error: (error: unknown) => {
+        if (error instanceof ApiError) {
+          this.errors.set(error.errors);
+        }
         this.hasFailed.set(true);
         this.isLoading.set(false);
       },

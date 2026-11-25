@@ -4,7 +4,14 @@
   @if (isLoading()) {
     <p class="text-sm text-gray-500">Loading Purchase Orders...</p>
   } @else if (hasFailed()) {
-    <p class="text-sm text-red-600">Failed to load Purchase Orders. Is the API running?</p>
+    <p class="text-sm text-red-600">Purchase Orders could not be loaded.</p>
+    @if (errors().length > 0) {
+      <ul class="mt-2 list-disc pl-5 text-sm text-red-600">
+        @for (message of errors(); track $index) {
+          <li>{{ message }}</li>
+        }
+      </ul>
+    }
   } @else if (orders().length > 0) {
     <table class="w-full text-sm">
       <thead>

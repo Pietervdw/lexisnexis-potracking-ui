@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { PurchaseOrderService } from './purchaseorder-service';
+import { ApiError, PurchaseOrderService } from './purchaseorder-service';
 
 describe('PurchaseOrderService', () => {
   let service: PurchaseOrderService;
@@ -63,5 +63,25 @@ describe('PurchaseOrderService', () => {
     service.list().subscribe((result) => (items = result));
     http.expectOne('/purchaseorders').flush({ success: true, purchaseOrders: [] });
     expect(items).toEqual([]);
+  });
+
+  it('fails with the API error messages when the envelope reports Success false', () => {
+    let error: unknown;
+    service.list().subscribe({ error: (e) => (error = e) });
+    http.expectOne('/purchaseorders').flush({
+      success: false,
+      errors: ['Something went wrong on the server.'],
+      purchaseOrders: [],
+    });
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).errors).toEqual(['Something went wrong on the server.']);
+  });
+
+  it('fails with an empty error list when the envelope reports Success false without messages', () => {
+    let error: unknown;
+    service.list().subscribe({ error: (e) => (error = e) });
+    http.expectOne('/purchaseorders').flush({ success: false, errors: null, purchaseOrders: [] });
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).errors).toEqual([]);
   });
 });
