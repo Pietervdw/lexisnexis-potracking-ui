@@ -31,3 +31,7 @@ _Avoid_: state
 **Terminal Status**:
 Fulfilled or Cancelled. A Purchase Order in a terminal status never changes status again.
 _Avoid_: final status, closed
+
+**Latest**:
+The Purchase Order with the highest PO Number. Lists are sorted Latest first, by PO Number descending.
+_Avoid_: newest, most recent
