@@ -1,8 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withDisabledInitialNavigation } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 import { PurchaseOrderCreate } from './purchase-order-create';
+
+@Component({ selector: 'purchase-order-list-stub', template: '' })
+class PurchaseOrderListStub {}
 
 const CUSTOMERS_RESPONSE = [
   { id: 1, name: 'Acme' },
@@ -19,7 +24,10 @@ describe('PurchaseOrderCreate', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter(
-          [{ path: 'purchase-orders/:number', component: PurchaseOrderCreate }],
+          [
+            { path: 'purchase-orders', component: PurchaseOrderListStub },
+            { path: 'purchase-orders/:number', component: PurchaseOrderCreate },
+          ],
           withDisabledInitialNavigation(),
         ),
       ],
@@ -30,7 +38,7 @@ describe('PurchaseOrderCreate', () => {
   it('renders the form with customers loaded from the Customers service', () => {
     const fixture = TestBed.createComponent(PurchaseOrderCreate);
     fixture.detectChanges();
-    http.expectOne('/customers').flush(CUSTOMERS_RESPONSE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -51,7 +59,7 @@ describe('PurchaseOrderCreate', () => {
   it('adds and removes Line Item rows, keeping one at the minimum', () => {
     const fixture = TestBed.createComponent(PurchaseOrderCreate);
     fixture.detectChanges();
-    http.expectOne('/customers').flush(CUSTOMERS_RESPONSE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -76,7 +84,7 @@ describe('PurchaseOrderCreate', () => {
   it('shows inline validation errors and blocks the API call when submitting an empty form', () => {
     const fixture = TestBed.createComponent(PurchaseOrderCreate);
     fixture.detectChanges();
-    http.expectOne('/customers').flush(CUSTOMERS_RESPONSE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -109,7 +117,7 @@ describe('PurchaseOrderCreate', () => {
     const fixture = TestBed.createComponent(PurchaseOrderCreate);
     const router = TestBed.inject(Router);
     fixture.detectChanges();
-    http.expectOne('/customers').flush(CUSTOMERS_RESPONSE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -128,7 +136,7 @@ describe('PurchaseOrderCreate', () => {
     root.querySelector<HTMLButtonElement>('[data-testid="submit-button"]')!.click();
     fixture.detectChanges();
 
-    const request = http.expectOne('/purchaseorders');
+    const request = http.expectOne(`${environment.apiUrl}/purchaseorders`);
     expect(request.request.method).toEqual('POST');
     expect(request.request.body).toEqual({
       customerId: 2,
@@ -143,17 +151,31 @@ describe('PurchaseOrderCreate', () => {
     expect(router.url).toEqual('/purchase-orders/PO0007');
   });
 
+  it('returns to the Purchase Orders list when the Cancel button is clicked', async () => {
+    const fixture = TestBed.createComponent(PurchaseOrderCreate);
+    const router = TestBed.inject(Router);
+    fixture.detectChanges();
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+
+    root.querySelector<HTMLAnchorElement>('[data-testid="cancel-button"]')!.click();
+    await fixture.whenStable();
+
+    expect(router.url).toEqual('/purchase-orders');
+  });
+
   it('shows the API messages inline when the create is rejected with a custom envelope', () => {
     const fixture = TestBed.createComponent(PurchaseOrderCreate);
     fixture.detectChanges();
-    http.expectOne('/customers').flush(CUSTOMERS_RESPONSE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
     fillValidForm(root);
     root.querySelector<HTMLButtonElement>('[data-testid="submit-button"]')!.click();
     fixture.detectChanges();
-    http.expectOne('/purchaseorders').flush(
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(
       {
         success: false,
         errors: ["An order with external reference 'EXT-100' already exists."],
@@ -171,14 +193,14 @@ describe('PurchaseOrderCreate', () => {
   it('shows the flattened field messages inline when the create is rejected with ValidationProblemDetails', () => {
     const fixture = TestBed.createComponent(PurchaseOrderCreate);
     fixture.detectChanges();
-    http.expectOne('/customers').flush(CUSTOMERS_RESPONSE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS_RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
     fillValidForm(root);
     root.querySelector<HTMLButtonElement>('[data-testid="submit-button"]')!.click();
     fixture.detectChanges();
-    http.expectOne('/purchaseorders').flush(
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(
       {
         title: 'One or more validation errors occurred.',
         status: 400,

@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withDisabledInitialNavigation } from '@angular/router';
+import { environment } from '../../../../environments/environment';
 import { PurchaseOrderList } from './purchase-order-list';
 
 @Component({ selector: 'purchase-order-detail-stub', template: '' })
@@ -44,7 +45,7 @@ describe('PurchaseOrderList', () => {
   it('filters the rows as the user types', () => {
     const fixture = TestBed.createComponent(PurchaseOrderList);
     fixture.detectChanges();
-    http.expectOne('/purchaseorders').flush(RESPONSE);
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -76,7 +77,7 @@ describe('PurchaseOrderList', () => {
   it('shows a no-results message when nothing matches the search', () => {
     const fixture = TestBed.createComponent(PurchaseOrderList);
     fixture.detectChanges();
-    http.expectOne('/purchaseorders').flush(RESPONSE);
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -96,7 +97,7 @@ describe('PurchaseOrderList', () => {
     const fixture = TestBed.createComponent(PurchaseOrderList);
     const router = TestBed.inject(Router);
     fixture.detectChanges();
-    http.expectOne('/purchaseorders').flush(RESPONSE);
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -110,7 +111,7 @@ describe('PurchaseOrderList', () => {
     const fixture = TestBed.createComponent(PurchaseOrderList);
     const router = TestBed.inject(Router);
     fixture.detectChanges();
-    http.expectOne('/purchaseorders').flush(RESPONSE);
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(RESPONSE);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 

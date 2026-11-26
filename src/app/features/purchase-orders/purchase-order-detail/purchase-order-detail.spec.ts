@@ -8,6 +8,7 @@ import {
 } from '@angular/router';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
+import { environment } from '../../../../environments/environment';
 import { PurchaseOrderDetail } from './purchase-order-detail';
 
 const DETAIL_ENVELOPE = {
@@ -46,8 +47,8 @@ describe('PurchaseOrderDetail', () => {
   function loadPage(fixture: ComponentFixture<PurchaseOrderDetail>, envelope: object) {
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
-    http.expectOne('/purchaseorders/PO0001').flush(envelope);
-    http.expectOne('/customers').flush(CUSTOMERS);
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`).flush(envelope);
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS);
     fixture.detectChanges();
     return fixture.nativeElement as HTMLElement;
   }
@@ -78,7 +79,7 @@ describe('PurchaseOrderDetail', () => {
     notFound.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
     http
-      .expectOne('/purchaseorders/PO0001')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO0001`)
       .flush(
         { success: false, errors: ["Purchase order with number 'PO0001' not found."] },
         { status: 404, statusText: 'Not Found' },
@@ -99,8 +100,8 @@ describe('PurchaseOrderDetail', () => {
     const fixture = TestBed.createComponent(PurchaseOrderDetail);
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
-    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
-    http.expectOne('/customers').flush([
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`).flush(DETAIL_ENVELOPE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush([
       { id: 3, name: 'Acme' },
       { id: 1, name: 'Globex' },
     ]);
@@ -127,8 +128,8 @@ describe('PurchaseOrderDetail', () => {
     const fixture = TestBed.createComponent(PurchaseOrderDetail);
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
-    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
-    http.expectOne('/customers').flush([{ id: 3, name: 'Acme' }]);
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`).flush(DETAIL_ENVELOPE);
+    http.expectOne(`${environment.apiUrl}/customers`).flush([{ id: 3, name: 'Acme' }]);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -151,7 +152,7 @@ describe('PurchaseOrderDetail', () => {
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
     http
-      .expectOne('/purchaseorders/PO0001')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO0001`)
       .flush(
         { success: false, errors: ["Purchase order with number 'PO0001' not found."] },
         { status: 404, statusText: 'Not Found' },
@@ -171,7 +172,7 @@ describe('PurchaseOrderDetail', () => {
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
     http
-      .expectOne('/purchaseorders/PO0001')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO0001`)
       .flush(
         { success: false, errors: ['Something went wrong on the server.'] },
         { status: 500, statusText: 'Server Error' },
@@ -189,9 +190,9 @@ describe('PurchaseOrderDetail', () => {
     const fixture = TestBed.createComponent(PurchaseOrderDetail);
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
-    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`).flush(DETAIL_ENVELOPE);
     http
-      .expectOne('/customers')
+      .expectOne(`${environment.apiUrl}/customers`)
       .flush({ success: false }, { status: 500, statusText: 'Server Error' });
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
@@ -208,13 +209,13 @@ describe('PurchaseOrderDetail', () => {
     const fixture = TestBed.createComponent(PurchaseOrderDetail);
     fixture.detectChanges();
     paramMap$.next(convertToParamMap({ number: 'PO0001' }));
-    const stale = http.expectOne('/purchaseorders/PO0001');
+    const stale = http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`);
     paramMap$.next(convertToParamMap({ number: 'PO0002' }));
-    http.expectOne('/purchaseorders/PO0002').flush({
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0002`).flush({
       ...DETAIL_ENVELOPE,
       purchaseOrder: { ...DETAIL_ENVELOPE.purchaseOrder, number: 'PO0002' },
     });
-    http.expectOne('/customers').flush([{ id: 3, name: 'Acme' }]);
+    http.expectOne(`${environment.apiUrl}/customers`).flush([{ id: 3, name: 'Acme' }]);
     fixture.detectChanges();
     const root = fixture.nativeElement as HTMLElement;
 
@@ -251,12 +252,12 @@ describe('PurchaseOrderDetail', () => {
     const button = root.querySelector('button[data-testid="status-update"]')! as HTMLButtonElement;
     button.click();
 
-    const patch = http.expectOne('/purchaseorders/PO0001/status');
+    const patch = http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001/status`);
     expect(patch.request.method).toEqual('PATCH');
     expect(patch.request.body).toEqual({ status: 2 });
     patch.flush({ success: true });
-    http.expectOne('/purchaseorders/PO0001').flush(detailWithStatus(2));
-    http.expectOne('/customers').flush(CUSTOMERS);
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`).flush(detailWithStatus(2));
+    http.expectOne(`${environment.apiUrl}/customers`).flush(CUSTOMERS);
     fixture.detectChanges();
 
     expect(root.querySelector('[data-testid="status-badge"]')?.textContent?.trim()).toEqual(
@@ -284,7 +285,7 @@ describe('PurchaseOrderDetail', () => {
     (root.querySelector('button[data-testid="status-update"]')! as HTMLButtonElement).click();
 
     http
-      .expectOne('/purchaseorders/PO0001/status')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO0001/status`)
       .flush(
         { success: false, errors: ['Cannot change status from Pending to Fulfilled.'] },
         { status: 400, statusText: 'Bad Request' },

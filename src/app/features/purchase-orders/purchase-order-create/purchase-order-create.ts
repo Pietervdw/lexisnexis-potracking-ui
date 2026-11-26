@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CustomerService } from '../../customers/data-access/customer-service';
 import type { Customer } from '../../customers/data-access/customer-service';
 import { PurchaseOrderService } from '../data-access/purchaseorder-service';
@@ -22,6 +22,7 @@ interface LineDraft extends PurchaseOrderLineDraft {
 
 @Component({
   selector: 'app-purchase-order-create',
+  imports: [RouterLink],
   templateUrl: './purchase-order-create.html',
 })
 export class PurchaseOrderCreate {

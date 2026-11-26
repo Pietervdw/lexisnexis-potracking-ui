@@ -3,6 +3,7 @@ import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ApiError, NotFoundError } from '../../../core/http/api-error';
+import { environment } from '../../../../environments/environment';
 
 interface ApiResponse {
   success: boolean;
@@ -80,7 +81,7 @@ export class PurchaseOrderService {
   }
 
   list(): Observable<PurchaseOrderListItem[]> {
-    return this.http.get<PurchaseOrdersGetResponse>('/purchaseorders').pipe(
+    return this.http.get<PurchaseOrdersGetResponse>(`${environment.apiUrl}/purchaseorders`).pipe(
       map((response) => {
         const { purchaseOrders } = this.unwrapEnvelope(response);
         return [...purchaseOrders].sort((a, b) => b.number.localeCompare(a.number));
@@ -89,57 +90,63 @@ export class PurchaseOrderService {
   }
 
   changeStatus(number: string, status: number): Observable<void> {
-    return this.http.patch<ApiResponse>(`/purchaseorders/${number}/status`, { status }).pipe(
-      map((response) => {
-        this.unwrapEnvelope(response);
-      }),
-      catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse) {
-          throw new ApiError(this.apiErrorsFrom(error));
-        }
-        throw error;
-      }),
-    );
+    return this.http
+      .patch<ApiResponse>(`${environment.apiUrl}/purchaseorders/${number}/status`, { status })
+      .pipe(
+        map((response) => {
+          this.unwrapEnvelope(response);
+        }),
+        catchError((error: unknown) => {
+          if (error instanceof HttpErrorResponse) {
+            throw new ApiError(this.apiErrorsFrom(error));
+          }
+          throw error;
+        }),
+      );
   }
 
   getByNumber(number: string): Observable<PurchaseOrderDetail> {
-    return this.http.get<PurchaseOrderGetResponse>(`/purchaseorders/${number}`).pipe(
-      map((response) => {
-        const { purchaseOrder } = this.unwrapEnvelope(response);
-        if (purchaseOrder === null) {
-          throw new ApiError(['The Purchase Order data is missing from the response.']);
-        }
-        return purchaseOrder;
-      }),
-      catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse) {
-          const apiError =
-            error.status === 404
-              ? new NotFoundError(this.apiErrorsFrom(error))
-              : new ApiError(this.apiErrorsFrom(error));
-          throw apiError;
-        }
-        throw error;
-      }),
-    );
+    return this.http
+      .get<PurchaseOrderGetResponse>(`${environment.apiUrl}/purchaseorders/${number}`)
+      .pipe(
+        map((response) => {
+          const { purchaseOrder } = this.unwrapEnvelope(response);
+          if (purchaseOrder === null) {
+            throw new ApiError(['The Purchase Order data is missing from the response.']);
+          }
+          return purchaseOrder;
+        }),
+        catchError((error: unknown) => {
+          if (error instanceof HttpErrorResponse) {
+            const apiError =
+              error.status === 404
+                ? new NotFoundError(this.apiErrorsFrom(error))
+                : new ApiError(this.apiErrorsFrom(error));
+            throw apiError;
+          }
+          throw error;
+        }),
+      );
   }
 
   create(request: PurchaseOrderCreateRequest): Observable<PurchaseOrderDetail> {
-    return this.http.post<PurchaseOrderCreateResponse>('/purchaseorders', request).pipe(
-      map((response) => {
-        const { purchaseOrder } = this.unwrapEnvelope(response);
-        if (purchaseOrder === null) {
-          throw new ApiError(['The Purchase Order data is missing from the response.']);
-        }
-        return purchaseOrder;
-      }),
-      catchError((error: unknown) => {
-        if (error instanceof HttpErrorResponse) {
-          throw new ApiError(apiErrorMessages(error.error));
-        }
-        throw error;
-      }),
-    );
+    return this.http
+      .post<PurchaseOrderCreateResponse>(`${environment.apiUrl}/purchaseorders`, request)
+      .pipe(
+        map((response) => {
+          const { purchaseOrder } = this.unwrapEnvelope(response);
+          if (purchaseOrder === null) {
+            throw new ApiError(['The Purchase Order data is missing from the response.']);
+          }
+          return purchaseOrder;
+        }),
+        catchError((error: unknown) => {
+          if (error instanceof HttpErrorResponse) {
+            throw new ApiError(apiErrorMessages(error.error));
+          }
+          throw error;
+        }),
+      );
   }
 }
 

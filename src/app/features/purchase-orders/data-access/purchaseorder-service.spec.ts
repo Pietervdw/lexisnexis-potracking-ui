@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { environment } from '../../../../environments/environment';
 import { PurchaseOrderService } from './purchaseorder-service';
 import type { PurchaseOrderDetail } from './purchaseorder-service';
 import { ApiError, NotFoundError } from '../../../core/http/api-error';
@@ -20,7 +21,7 @@ describe('PurchaseOrderService', () => {
   it('lists Purchase Orders with a GET to /purchaseorders', () => {
     const orders = service.list();
     orders.subscribe();
-    const request = http.expectOne('/purchaseorders');
+    const request = http.expectOne(`${environment.apiUrl}/purchaseorders`);
     expect(request.request.method).toEqual('GET');
     request.flush({ success: true, purchaseOrders: [] });
     http.verify();
@@ -29,7 +30,7 @@ describe('PurchaseOrderService', () => {
   it('parses the list envelope into Purchase Order list items', () => {
     let items: unknown;
     service.list().subscribe((result) => (items = result));
-    http.expectOne('/purchaseorders').flush({
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush({
       success: true,
       purchaseOrders: [
         { number: 'PO0002', externalRef: 'REF-B', customerName: 'Acme', total: 150.5 },
@@ -45,7 +46,7 @@ describe('PurchaseOrderService', () => {
   it('sorts Latest first, by PO Number descending', () => {
     let items: unknown;
     service.list().subscribe((result) => (items = result));
-    http.expectOne('/purchaseorders').flush({
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush({
       success: true,
       purchaseOrders: [
         { number: 'PO0003', externalRef: 'REF-C', customerName: 'Initech', total: 10 },
@@ -63,14 +64,14 @@ describe('PurchaseOrderService', () => {
   it('emits an empty list when the API returns no Purchase Orders', () => {
     let items: unknown;
     service.list().subscribe((result) => (items = result));
-    http.expectOne('/purchaseorders').flush({ success: true, purchaseOrders: [] });
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush({ success: true, purchaseOrders: [] });
     expect(items).toEqual([]);
   });
 
   it('fails with the API error messages when the envelope reports Success false', () => {
     let error: unknown;
     service.list().subscribe({ error: (e) => (error = e) });
-    http.expectOne('/purchaseorders').flush({
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush({
       success: false,
       errors: ['Something went wrong on the server.'],
       purchaseOrders: [],
@@ -82,14 +83,14 @@ describe('PurchaseOrderService', () => {
   it('fails with an empty error list when the envelope reports Success false without messages', () => {
     let error: unknown;
     service.list().subscribe({ error: (e) => (error = e) });
-    http.expectOne('/purchaseorders').flush({ success: false, errors: null, purchaseOrders: [] });
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush({ success: false, errors: null, purchaseOrders: [] });
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).errors).toEqual([]);
   });
 
   it('fetches a Purchase Order by PO Number with a GET to /purchaseorders/:number', () => {
     service.getByNumber('PO0001').subscribe();
-    const request = http.expectOne('/purchaseorders/PO0001');
+    const request = http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`);
     expect(request.request.method).toEqual('GET');
     request.flush({ success: true, purchaseOrder: DETAIL_ENVELOPE.purchaseOrder });
     http.verify();
@@ -98,7 +99,7 @@ describe('PurchaseOrderService', () => {
   it('parses the detail envelope into a Purchase Order detail', () => {
     let detail: unknown;
     service.getByNumber('PO0001').subscribe((result) => (detail = result));
-    http.expectOne('/purchaseorders/PO0001').flush(DETAIL_ENVELOPE);
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001`).flush(DETAIL_ENVELOPE);
     expect(detail).toEqual(DETAIL_ENVELOPE.purchaseOrder);
   });
 
@@ -111,7 +112,7 @@ describe('PurchaseOrderService', () => {
         lines: [{ sku: 'SKU-1', productName: 'Widget', quantity: 2, unitPrice: 25 }],
       })
       .subscribe((result) => (created = result));
-    const request = http.expectOne('/purchaseorders');
+    const request = http.expectOne(`${environment.apiUrl}/purchaseorders`);
     expect(request.request.method).toEqual('POST');
     expect(request.request.body).toEqual({
       customerId: 3,
@@ -127,7 +128,7 @@ describe('PurchaseOrderService', () => {
     service
       .create({ customerId: 1, externalRef: 'REF-A', lines: [] })
       .subscribe({ error: (e) => (error = e) });
-    http.expectOne('/purchaseorders').flush(
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(
       {
         success: false,
         errors: ["An order with external reference 'REF-A' already exists."],
@@ -149,7 +150,7 @@ describe('PurchaseOrderService', () => {
         lines: [{ sku: '', productName: '', quantity: 0, unitPrice: -1 }],
       })
       .subscribe({ error: (e) => (error = e) });
-    http.expectOne('/purchaseorders').flush(
+    http.expectOne(`${environment.apiUrl}/purchaseorders`).flush(
       {
         type: 'https://tools.ietf.org/html/rfc9110#section-15.5.1',
         title: 'One or more validation errors occurred.',
@@ -173,7 +174,7 @@ describe('PurchaseOrderService', () => {
   it('requests a status change with a PATCH to /purchaseorders/:number/status', () => {
     const done = service.changeStatus('PO0001', 1);
     done.subscribe();
-    const request = http.expectOne('/purchaseorders/PO0001/status');
+    const request = http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001/status`);
     expect(request.request.method).toEqual('PATCH');
     request.flush({ success: true });
     http.verify();
@@ -181,7 +182,7 @@ describe('PurchaseOrderService', () => {
 
   it('sends the integer status in the PATCH body', () => {
     service.changeStatus('PO0002', 2).subscribe();
-    const request = http.expectOne('/purchaseorders/PO0002/status');
+    const request = http.expectOne(`${environment.apiUrl}/purchaseorders/PO0002/status`);
     expect(request.request.body).toEqual({ status: 2 });
     request.flush({ success: true });
     http.verify();
@@ -193,7 +194,7 @@ describe('PurchaseOrderService', () => {
     service
       .changeStatus('PO0001', 0)
       .subscribe({ complete: () => (completed = true), error: (e) => (failure = e) });
-    http.expectOne('/purchaseorders/PO0001/status').flush({ success: true });
+    http.expectOne(`${environment.apiUrl}/purchaseorders/PO0001/status`).flush({ success: true });
     expect(completed).toBe(true);
     expect(failure).toBeUndefined();
     http.verify();
@@ -203,7 +204,7 @@ describe('PurchaseOrderService', () => {
     let error: unknown;
     service.changeStatus('PO0001', 3).subscribe({ error: (e) => (error = e) });
     http
-      .expectOne('/purchaseorders/PO0001/status')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO0001/status`)
       .flush(
         { success: false, errors: ['Cannot change status from Pending to Fulfilled.'] },
         { status: 400, statusText: 'Bad Request' },
@@ -216,7 +217,7 @@ describe('PurchaseOrderService', () => {
     let error: unknown;
     service.changeStatus('PO0001', 4).subscribe({ error: (e) => (error = e) });
     http
-      .expectOne('/purchaseorders/PO0001/status')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO0001/status`)
       .flush({ success: false, errors: null }, { status: 400, statusText: 'Bad Request' });
     expect(error).toBeInstanceOf(ApiError);
     expect((error as ApiError).errors).toEqual([]);
@@ -226,7 +227,7 @@ describe('PurchaseOrderService', () => {
     let error: unknown;
     service.getByNumber('PO9999').subscribe({ error: (e) => (error = e) });
     http
-      .expectOne('/purchaseorders/PO9999')
+      .expectOne(`${environment.apiUrl}/purchaseorders/PO9999`)
       .flush(
         { success: false, errors: ["Purchase order with number 'PO9999' not found."] },
         { status: 404, statusText: 'Not Found' },
